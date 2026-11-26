@@ -19,7 +19,12 @@ from app.data.export_review import export_review_csv
 from app.data.extract import extract_file
 from app.data.fetch import fetch_all, format_summary_table, raw_dir
 from app.data.filters import filter_items
-from app.data.generate import generate_items, project_dry_run
+from app.data.generate import (
+    GenerationPaths,
+    GenerationSummary,
+    project_dry_run,
+    run_generation,
+)
 from app.data.import_review import import_review_csv
 from app.data.leakage import assert_items_no_leakage
 from app.data.licence import write_routed_items
@@ -209,6 +214,13 @@ def cmd_generate(args: argparse.Namespace) -> int:
                     "model_id": estimate.model_id,
                     "max_tokens": estimate.max_tokens,
                     "estimated_input_tokens_per_call": estimate.estimated_input_tokens_per_call,
+                    "generation_cap_usd": float(guard.phase_caps.get("generation", 0)),
+                    "generation_spent_usd": float(guard.spent("generation")),
+                    "note": (
+                        "worst case assumes every call uses max_tokens and a conservative "
+                        "input estimate; the live run checks the cap before every call and "
+                        "stops cleanly (resumable) if the next call could exceed it"
+                    ),
                 },
                 indent=2,
             )
@@ -226,14 +238,33 @@ def cmd_generate(args: argparse.Namespace) -> int:
         "WARNING: live generation uses AWS credentials and Bedrock spend.",
         file=sys.stderr,
     )
-    generated = generate_items(selected, client, dry_run=False)
-    assert isinstance(generated, list)
-    out_path = private / "generated.jsonl"
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    with out_path.open("w", encoding="utf-8") as handle:
-        for item in generated:
-            handle.write(item.model_dump_json() + "\n")
-    print(json.dumps({"items": len(generated), "path": str(out_path)}))
+    paths = GenerationPaths.in_dir(private)
+
+    def _report(done: int, todo: int, summary: GenerationSummary) -> None:
+        if done == todo or done % 25 == 0:
+            print(
+                f"progress: {done}/{todo} chunks this run, "
+                f"items={summary.items_generated} skipped={summary.skipped} "
+                f"spend=${float(summary.spend_this_run_usd):.4f}",
+                file=sys.stderr,
+            )
+
+    summary = run_generation(
+        selected,
+        client,
+        paths,
+        retry_failed=args.retry_failed,
+        on_progress=_report,
+    )
+    payload = summary.as_dict()
+    payload["path"] = str(paths.generated)
+    payload["failures_path"] = str(paths.failures)
+    print(json.dumps(payload, indent=2))
+    if summary.stopped.startswith("interrupted"):
+        return 130
+    if summary.stopped:
+        print(f"ERROR: {summary.stopped}", file=sys.stderr)
+        return 2
     return 0
 
 
@@ -243,7 +274,7 @@ def _fixture_entries() -> list[tuple[Chunk, str, str]]:
     format_to_fixture = {
         "arxiv_src": fixture_root / "arxiv_src" / "sample.tex",
         "html": fixture_root / "html" / "sample.html",
-        "jats": fixture_root / "html" / "sample.html",
+        "jats": fixture_root / "jats" / "sample.xml",
         "libretexts": fixture_root / "libretexts" / "sample.html",
         "pdf": fixture_root / "pdf" / "sample.pdf",
     }
@@ -267,8 +298,12 @@ def cmd_filter(args: argparse.Namespace) -> int:
     raw_items = []
     if src.exists():
         for line in src.read_text(encoding="utf-8").splitlines():
-            if line.strip():
+            if not line.strip():
+                continue
+            try:
                 raw_items.append(json.loads(line))
+            except json.JSONDecodeError:
+                print("WARNING: skipping a torn line in generated.jsonl", file=sys.stderr)
     filtered = filter_items(raw_items)
     out = private / "filtered.jsonl"
     with out.open("w", encoding="utf-8") as handle:
@@ -362,6 +397,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--fixtures",
         action="store_true",
         help="use tests/fixtures when private chunks are absent",
+    )
+    p_gen.add_argument(
+        "--retry-failed",
+        action="store_true",
+        help="re-attempt chunks previously skipped after a bad reply",
     )
     p_gen.set_defaults(func=cmd_generate)
 

@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `generate` no longer aborts on one malformed model reply. Replies are repaired (unescaped inner quotes, LaTeX backslashes, fences, truncation at `max_tokens`); an unparseable reply is retried once, then the chunk is skipped and logged to `data/private/generate_failures.jsonl`.
+- `generate` is resumable: items are appended per chunk with a progress file, so Ctrl-C or a crash keeps finished work and a rerun skips finished chunks (`--retry-failed` re-attempts skipped ones). Prints an end summary (ok, retried, skipped, items, spend).
+- Budget caps hold across retries and reruns (spend is read from the persisted ledger before every call); reaching the cap stops cleanly instead of crashing. Reservations use a conservative input-token estimate.
+- Item ids, split, licence class and provenance are always set by the pipeline, never taken from the model reply (model-supplied ids collided across chunks).
+- JATS sources (cs-018) are parsed with the XML parser, so `XMLParsedAsHTMLWarning` is gone; section titles become headings and TeX maths is kept.
+- `filter` skips a torn trailing line in `generated.jsonl`.
+
+### Changed
+
+- Generation prompt `generate_items.v2` asks for strict JSON with escaped quotes and backslashes. `max_tokens` stays 1200.
+
 - Fetch validates Content-Type and magic bytes before saving; HTML landing pages are no longer written as PDFs.
 - cs-041 points at the Think Complexity 2e PDF; cs-021 fetches Network Science HTML chapters; cs-018 uses the PLOS JATS manuscript URL.
 - Chunk skips a bad source with a warning instead of crashing; exits non-zero only when nothing was chunked.

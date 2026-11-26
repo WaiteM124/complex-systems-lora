@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Archiving and Interchange DTD v1.1 20151215//EN" "JATS-archivearticle1.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" article-type="research-article">
+  <front>
+    <article-meta>
+      <title-group>
+        <article-title>Synthetic Notes on Early Warning Signals</article-title>
+      </title-group>
+      <abstract>
+        <p>Systems near a <italic>tipping point</italic> recover slowly from small perturbations.</p>
+      </abstract>
+    </article-meta>
+  </front>
+  <body>
+    <sec id="s1">
+      <title>Introduction</title>
+      <p>Critical slowing down raises the lag-1 autocorrelation <inline-formula><mml:math id="m1" alttext="\rho_1"><mml:msub><mml:mi>ρ</mml:mi><mml:mn>1</mml:mn></mml:msub></mml:math></inline-formula> of a time series <xref ref-type="bibr" rid="r1">[1]</xref>.</p>
+      <sec id="s1a">
+        <title>Variance</title>
+        <p>Variance also grows as the recovery rate <inline-formula><tex-math>\lambda</tex-math></inline-formula> approaches zero.</p>
+        <fig id="f1"><caption><title>Figure title stays inline</title><p>A rolling window statistic.</p></caption></fig>
+      </sec>
+    </sec>
+  </body>
+  <back>
+    <ref-list><ref id="r1"><mixed-citation>Synthetic reference that should be dropped.</mixed-citation></ref></ref-list>
+  </back>
+</article>

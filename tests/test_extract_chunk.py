@@ -42,3 +42,24 @@ def test_chunk_sizes_within_bounds() -> None:
     for chunk in chunks:
         # Allow the section prefix; body should stay near the max window.
         assert chunk.token_count <= 120 + 30
+
+
+def test_jats_uses_xml_parser_without_warning() -> None:
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        text = extract_file(FIXTURES / "jats" / "sample.xml", "jats")
+    assert "## Introduction" in text
+    assert "### Variance" in text
+    assert "$\\rho_1$" in text
+    assert "$\\lambda$" in text
+    assert "Synthetic reference" not in text
+    assert "## Figure title" not in text
+    chunks = chunk_text(text, source_id="fixture", min_tokens=1, max_tokens=80)
+    assert any("Variance" in chunk.section_path for chunk in chunks)
+
+
+def test_jats_falls_back_to_html_for_html_files() -> None:
+    text = extract_file(FIXTURES / "html" / "sample.html", "jats")
+    assert "small-world" in text.lower()

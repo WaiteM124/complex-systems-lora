@@ -1,6 +1,6 @@
 """Extract plain text from already-downloaded source files.
 
-Supports arxiv_src (LaTeX), libretexts/html/jats (HTML), and pdf.
+Supports arxiv_src (LaTeX), libretexts/html (HTML), jats (XML), and pdf.
 Inline maths is preserved as TeX (`$...$` or MathJax).
 """
 
@@ -13,6 +13,7 @@ MATH_DISPLAY = re.compile(r"\\\[(.+?)\\\]", re.DOTALL)
 MATH_INLINE = re.compile(r"\\\((.+?)\\\)", re.DOTALL)
 SECTION_CMD = re.compile(r"\\(chapter|section|subsection|subsubsection)\*?\{([^}]*)\}")
 LATEX_COMMENT = re.compile(r"(?m)^%.*$")
+SPACE_BEFORE_PUNCT = re.compile(r"\s+([.,;:])(?=\s|$)")
 LATEX_COMMAND = re.compile(r"\\[a-zA-Z]+\*?(\[[^\]]*\])?(\{[^}]*\})?")
 
 
@@ -20,7 +21,9 @@ def extract_file(path: Path, fmt: str) -> str:
     fmt_norm = fmt.lower()
     if fmt_norm == "arxiv_src":
         return extract_arxiv_src(path)
-    if fmt_norm in {"libretexts", "html", "jats"}:
+    if fmt_norm == "jats":
+        return extract_jats(path)
+    if fmt_norm in {"libretexts", "html"}:
         return extract_html(path)
     if fmt_norm == "pdf":
         return extract_pdf(path)
@@ -82,6 +85,73 @@ def extract_html(path: Path) -> str:
         heading.replace_with(soup.new_string(f"\n{'#' * level} {title}\n"))
     text = soup.get_text("\n")
     return _collapse_blank_lines(text)
+
+
+def _looks_like_html_document(raw: str) -> bool:
+    head = raw.lstrip()[:2000].lower()
+    if head.startswith("<?xml") or "<article" in head:
+        return False
+    return "<html" in head or "<!doctype html" in head
+
+
+def extract_jats(path: Path) -> str:
+    """JATS XML → text with the XML parser; headings from <sec><title>, maths as TeX.
+
+    Falls back to HTML extraction when the file is actually an HTML page.
+    """
+    raw = path.read_text(encoding="utf-8", errors="ignore")
+    if _looks_like_html_document(raw):
+        return extract_html(path)
+    try:
+        from bs4 import BeautifulSoup
+    except ImportError as exc:
+        raise RuntimeError(
+            "beautifulsoup4 is required for JATS extraction; install the data extra"
+        ) from exc
+
+    soup = BeautifulSoup(raw, features="xml")
+    for tag in soup.find_all(["ref-list", "object-id", "graphic", "permissions"]):
+        tag.decompose()
+    # Formulas: prefer the TeX form, else MathML alttext, else its text.
+    for formula in soup.find_all(["inline-formula", "disp-formula"]):
+        tex = formula.find("tex-math")
+        math = formula.find("math")
+        if tex is not None:
+            body = tex.get_text(" ", strip=True)
+        elif math is not None:
+            body = str(math.get("alttext") or math.get_text(" ", strip=True))
+        else:
+            body = formula.get_text(" ", strip=True)
+        body = body.strip().strip("$").strip()
+        delim = "$$" if formula.name == "disp-formula" else "$"
+        formula.replace_with(soup.new_string(f" {delim}{body}{delim} "))
+    for title in soup.find_all("title"):
+        parent = title.parent
+        if parent is not None and parent.name == "sec":
+            level = min(6, 1 + len(title.find_parents("sec")))
+            text = " ".join(title.get_text(" ").split())
+            title.replace_with(soup.new_string(f"\n{'#' * level} {text}\n"))
+    for para in soup.find_all("p"):
+        text = " ".join(para.get_text(" ").split())
+        para.replace_with(soup.new_string(f"\n{text}\n"))
+
+    parts: list[str] = []
+    article_title = soup.find("article-title")
+    if article_title is not None:
+        parts.append(f"# {' '.join(article_title.get_text(' ').split())}")
+    abstract = soup.find("abstract")
+    if abstract is not None:
+        parts.append("## Abstract\n" + abstract.get_text(""))
+    body_tag = soup.find("body")
+    if body_tag is not None:
+        parts.append(body_tag.get_text(""))
+    if not parts:
+        parts.append(soup.get_text("\n"))
+    lines = [
+        SPACE_BEFORE_PUNCT.sub(r"\1", " ".join(line.split()))
+        for line in "\n".join(parts).splitlines()
+    ]
+    return _collapse_blank_lines("\n".join(lines))
 
 
 def extract_pdf(path: Path) -> str:
