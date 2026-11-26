@@ -16,6 +16,7 @@ class BedrockResponse:
     input_tokens: int
     output_tokens: int
     raw: dict[str, Any] | None = None
+    stop_reason: str | None = None
 
 
 class BedrockTransport(Protocol):
@@ -86,7 +87,7 @@ class Boto3ConverseTransport:
         temperature: float,
     ) -> BedrockResponse:
         try:
-            import boto3  # type: ignore[import-not-found]
+            import boto3  # type: ignore[import-not-found,import-untyped,unused-ignore]
         except ImportError as exc:
             raise RuntimeError(
                 "boto3 is required for live Bedrock calls; install the bedrock extra"
@@ -111,6 +112,7 @@ class Boto3ConverseTransport:
             input_tokens=int(usage.get("inputTokens", 0)),
             output_tokens=int(usage.get("outputTokens", 0)),
             raw=resp if isinstance(resp, dict) else None,
+            stop_reason=str(resp.get("stopReason")) if resp.get("stopReason") else None,
         )
 
 
