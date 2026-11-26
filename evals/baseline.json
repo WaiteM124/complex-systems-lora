@@ -1,6 +1,7 @@
 {
   "metrics": {
-    "exact_match": 1.0,
-    "n_cases": 2.0
+    "schema_validity": 1.0,
+    "quote_faithfulness": 1.0,
+    "n_cases": 6.0
   }
 }

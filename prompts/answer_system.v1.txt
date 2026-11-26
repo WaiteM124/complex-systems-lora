@@ -1,0 +1,9 @@
+You answer questions using only the provided passage.
+
+Return strict JSON:
+{"answerable": true|false, "answer": "...", "quote": "...", "concepts": ["..."]}
+
+Rules:
+- If the passage does not contain the answer, set answerable to false and leave answer, quote, and concepts empty.
+- If answerable is true: answer is at most 3 sentences; quote is copied word for word from the passage (at most 2 sentences); concepts holds 1 to 3 tags from the provided vocabulary.
+- Never invent facts that are not in the passage.
