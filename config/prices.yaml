@@ -1,0 +1,29 @@
+# Copied from WaiteM124/rag-platform config/prices.yaml
+# Source commit: 31baf6703e38b7d6037312b0773d7f18f0ac5f3b
+# Kept only Qwen3 235B and DeepSeek V3.2 (verified eu-west-2 on-demand rates).
+# Original header notes apply: do not invent rates; verified entries only.
+
+version: 3
+checked_at: "2026-11-24"
+region: eu-west-2
+price_list_publication_date: "2026-11-23T16:43:56Z"
+source_url: "https://aws.amazon.com/bedrock/pricing/"
+price_list_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonBedrock/current/eu-west-2/index.json"
+
+models:
+  qwen.qwen3-235b-a22b-2507-v1:0:
+    # Source: AWS Price List EU (London) OnDemand, usagetype
+    # EUW2-Qwen3-235B-A22B-input-tokens / EUW2-Qwen3-235B-A22B-output-tokens
+    # Also listed under https://aws.amazon.com/bedrock/pricing/ (Qwen)
+    input_per_1k: 0.00034
+    output_per_1k: 0.00137
+    verified: true
+    source_url: "https://aws.amazon.com/bedrock/pricing/"
+
+  deepseek.v3.2:
+    # Source: AWS Price List EU (London) OnDemand, usagetype
+    # EUW2-deepseek.v3.2-input-tokens / EUW2-deepseek.v3.2-output-tokens
+    input_per_1k: 0.000961
+    output_per_1k: 0.0028675
+    verified: true
+    source_url: "https://aws.amazon.com/bedrock/pricing/"

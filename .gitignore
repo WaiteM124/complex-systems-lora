@@ -84,6 +84,11 @@ docker-compose.override.yml
 logs/
 evals/reports/
 
+# Private data and large model weights (never commit)
+data/private/
+data/raw/
+*.gguf
+
 # OS
 Thumbs.db
 

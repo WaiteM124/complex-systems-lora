@@ -1,0 +1,14 @@
+# Chunking, split, and generation knobs for the data pipeline.
+chunk:
+  min_tokens: 300
+  max_tokens: 500
+split:
+  train: 0.8
+  val: 0.1
+  test: 0.1
+  seed: 20261126
+generation:
+  test_set_target: 150
+  unanswerable_share: 0.2
+  over_generation: 1.4
+  items_per_passage: 5

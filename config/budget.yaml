@@ -1,0 +1,6 @@
+# Hard Bedrock spend caps for this project. Env BEDROCK_BUDGET_USD may only lower total_usd.
+total_usd: 4.50
+phases:
+  generation: 1.50
+  eval: 3.00
+ledger_path: data/ledger/bedrock_spend.jsonl

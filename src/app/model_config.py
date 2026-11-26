@@ -19,6 +19,8 @@ class ModelParams(BaseModel):
 
 
 class ModelsFile(BaseModel):
+    base_model: str
+    region: str
     default_environment: str
     environments: dict[str, dict[str, ModelParams]]
 
@@ -31,7 +33,7 @@ def load_models(path: Path | None = None) -> ModelsFile:
 
 
 def get_model(
-    name: str = "chat",
+    name: str = "generator",
     environment: str | None = None,
     *,
     path: Path | None = None,
@@ -46,3 +48,11 @@ def get_model(
         return models[name]
     except KeyError as exc:
         raise KeyError(f"unknown model {name!r} in environment {env!r}") from exc
+
+
+def get_base_model(*, path: Path | None = None) -> str:
+    return load_models(path).base_model
+
+
+def get_region(*, path: Path | None = None) -> str:
+    return load_models(path).region

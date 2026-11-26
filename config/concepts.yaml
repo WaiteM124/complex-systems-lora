@@ -1,0 +1,79 @@
+# Seed concept vocabulary (~60 tags) across modules A–I.
+# Tags are lower-kebab-case. Miles may edit later.
+modules:
+  A:
+    - complex-system
+    - emergence
+    - feedback-loop
+    - nonlinearity
+    - requisite-variety
+    - cybernetics
+    - hierarchy
+  B:
+    - fixed-point
+    - linear-stability
+    - phase-portrait
+    - bifurcation
+    - limit-cycle
+    - chaos
+    - lyapunov-exponent
+    - logistic-map
+    - period-doubling
+    - attractor
+    - jacobian
+    - tipping-point
+  C:
+    - self-organisation
+    - cellular-automaton
+    - agent-based-model
+    - collective-motion
+    - synchronisation
+    - causal-emergence
+    - edge-of-chaos
+  D:
+    - phase-transition
+    - criticality
+    - self-organised-criticality
+    - power-law
+    - scaling-law
+    - early-warning-signal
+    - critical-slowing-down
+    - universality
+  E:
+    - network
+    - degree-distribution
+    - small-world
+    - scale-free
+    - preferential-attachment
+    - community-structure
+    - network-robustness
+    - epidemic-spreading
+    - cascading-failure
+  F:
+    - entropy
+    - mutual-information
+    - maximum-entropy
+    - ergodicity
+    - time-average
+    - statistical-complexity
+    - transfer-entropy
+  G:
+    - evolutionary-dynamics
+    - replicator-dynamics
+    - evolutionary-game-theory
+    - cooperation
+    - fitness-landscape
+  H:
+    - differential-equation
+    - eigenvalue
+    - stochastic-process
+    - random-walk
+    - markov-chain
+    - numerical-integration
+    - power-law-fitting
+  I:
+    - multi-agent-system
+    - emergent-abilities
+    - resilience
+    - antifragility
+    - hidden-feedback
