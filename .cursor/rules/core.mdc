@@ -1,0 +1,17 @@
+---
+description: Core principles and never-do list for every change
+alwaysApply: true
+---
+
+# Core rules
+
+Canonical detail: `AGENTS.md`. When a rule here and that file conflict, `AGENTS.md` wins.
+
+- **Every change goes through a pull request.** Do not commit or push straight to `main`, including from a local machine.
+- **No secrets.** Never commit secrets, API keys, tokens, private keys, or real cloud account IDs. Use env vars and `.env.example` with placeholders only. If a secret is found, remove it and tell the owner which keys to rotate.
+- **Never invent metrics or results.** Report only what was actually run and measured.
+- **Never use client code or data**, and never name client systems or projects.
+- **Tests are the spec.** Do not delete, skip, or weaken tests or eval baselines solely to make CI pass.
+- **Fail closed.** Security gates default to denied when configuration is missing.
+- **Miles merges.** Agents do not merge PRs or dispatch privileged workflows without go-ahead.
+- Keep PRs small and scoped. Update docs when behaviour or workflow changes.

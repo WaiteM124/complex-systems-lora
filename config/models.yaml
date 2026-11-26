@@ -1,0 +1,22 @@
+# Model ids and generation parameters, loaded by src/app/model_config.py.
+# Replace the placeholder ids with the models this project actually uses.
+# Do not hardcode model ids or token limits in Python.
+
+default_environment: local
+
+environments:
+  local:
+    chat:
+      id: example-chat-small
+      temperature: 0.2
+      max_tokens: 1024
+  staging:
+    chat:
+      id: example-chat-small
+      temperature: 0.1
+      max_tokens: 2048
+  production:
+    chat:
+      id: example-chat-large
+      temperature: 0.1
+      max_tokens: 2048

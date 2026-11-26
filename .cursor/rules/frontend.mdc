@@ -1,0 +1,15 @@
+---
+description: Frontend engineering standards
+globs: "**/*.ts,**/*.tsx,**/*.css,**/*.js,**/*.jsx
+alwaysApply: false
+---
+
+# Frontend standards
+
+Canonical detail: `AGENTS.md`.
+
+- Prefer TypeScript, typed boundaries, and the existing layout of the frontend workspace when one exists.
+- Do not invent latency, cost, or quality numbers in the UI; display only values the backend actually returned.
+- Do not log secrets, tokens, or personal data to the browser console in production paths.
+- Before finishing: run the project's typecheck and build (for example `npm run typecheck` and `npm run build` from the frontend workspace).
+- Do not add a separate frontend CI workflow unless the project has already outgrown the default jobs.

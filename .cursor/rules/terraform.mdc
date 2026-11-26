@@ -1,0 +1,16 @@
+---
+description: Terraform and infrastructure standards
+globs: **/*.tf,**/*.tfvars,**/*.tfvars.example,**/*.hcl
+alwaysApply: false
+---
+
+# Terraform standards
+
+Canonical detail: `AGENTS.md`.
+
+- Optional AWS skeleton lives under `infra/terraform/`. Delete it if the project does not need Terraform.
+- All infrastructure is code. No console-driven resource changes.
+- Never commit secret values or real cloud account IDs. Prefer data sources (for example `data.aws_caller_identity`) and placeholders such as `<ACCOUNT_ID>` or `<STATE_BUCKET>` in examples.
+- Keep state and `.tfvars` with real values out of git (see `.gitignore`).
+- Before finishing: `terraform fmt -check -recursive`, `terraform init -backend=false`, and `terraform validate`. CI runs those when `infra/**` changes.
+- Keep infrastructure PRs intentional and small.

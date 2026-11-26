@@ -1,0 +1,2 @@
+{"id":"smoke-identity","input":"ok","expected":"ok","tags":["smoke"],"source":"example","licence":"CC0-1.0"}
+{"id":"smoke-uppercase","input":"hello","expected":"HELLO","tags":["smoke","uppercase"],"source":"example","licence":"CC0-1.0"}

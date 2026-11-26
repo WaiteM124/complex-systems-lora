@@ -1,0 +1,17 @@
+{
+  "name": "AI project",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "postCreateCommand": "pip install -e \".[dev]\" && pre-commit install",
+  "remoteEnv": {
+    "APP_ENV": "local"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "hashicorp.terraform"
+      ]
+    }
+  }
+}

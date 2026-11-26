@@ -1,0 +1,18 @@
+---
+description: Python engineering standards
+globs: "**/*.py"
+alwaysApply: false
+---
+
+# Python standards
+
+Canonical detail: `AGENTS.md`.
+
+- Target **Python 3.12+**. Type hints on public functions and methods.
+- Application code lives under `src/app/`. Tests live under `tests/`. Offline evals live under `evals/`.
+- Load settings from `app.settings` (fail closed). Load model ids from `config/models.yaml`, and prompts from `prompts/`, not from hardcoded strings.
+- Prefer small, typed functions and explicit errors over hidden side effects.
+- Do not log secrets, tokens, or raw credentials. Use the observability helpers; include `cost_usd` only when it was measured.
+- Do not invent metrics or results in code, comments, or tests.
+- Before finishing: `make lint`, `make typecheck`, and `make test` for the affected tests.
+- Do not mass-reformat unrelated files. Do not bump dependency versions unless the task asks for it.
