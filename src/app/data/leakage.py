@@ -16,6 +16,50 @@ def passage_ngrams(passage: str, n: int = 13) -> set[str]:
     return ngrams(passage, n)
 
 
+def _build_train_val_index(items: Iterable[Item], n: int = 13) -> dict[str, str]:
+    """Build an index of n-grams from train/val passages."""
+    index: dict[str, str] = {}
+    for item in items:
+        if item.split in {"train", "val"} and normalize_text(item.passage):
+            for gram in passage_ngrams(item.passage, n):
+                if gram and gram not in index:
+                    index[gram] = item.passage
+    return index
+
+
+def leaking_test_items(items: Iterable[Item], n: int = 13) -> list[Item]:
+    """Return test-split Items whose passage shares any n-gram with train/val."""
+    items_list = list(items)
+    index = _build_train_val_index(items_list, n)
+    leaking: list[Item] = []
+    for item in items_list:
+        if item.split != "test" or not normalize_text(item.passage):
+            continue
+        for gram in passage_ngrams(item.passage, n):
+            if gram in index:
+                leaking.append(item)
+                break
+    return leaking
+
+
+def drop_leaking_test_items(items: Iterable[Item], n: int = 13) -> tuple[list[Item], list[Item]]:
+    """Drop test items that leak n-grams with train/val.
+
+    Returns (kept, dropped) where kept has all train/val items plus non-leaking
+    test items, and dropped has the leaking test items.
+    """
+    items_list = list(items)
+    leaking_set = set(id(item) for item in leaking_test_items(items_list, n))
+    kept: list[Item] = []
+    dropped: list[Item] = []
+    for item in items_list:
+        if id(item) in leaking_set:
+            dropped.append(item)
+        else:
+            kept.append(item)
+    return kept, dropped
+
+
 def find_leaks(
     train_val_passages: Sequence[str],
     test_passages: Sequence[str],

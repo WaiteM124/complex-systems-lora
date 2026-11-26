@@ -26,7 +26,11 @@ from app.data.generate import (
     run_generation,
 )
 from app.data.import_review import import_review_csv
-from app.data.leakage import assert_items_no_leakage
+from app.data.leakage import (
+    LeakageError,
+    assert_items_no_leakage,
+    drop_leaking_test_items,
+)
 from app.data.licence import write_routed_items
 from app.data.notes import load_notes_dir, notes_to_chunks
 from app.data.sources import get_source, ingestable_sources, load_sources, require_ingestable
@@ -323,7 +327,46 @@ def cmd_leakage(args: argparse.Namespace) -> int:
         for line in path.read_text(encoding="utf-8").splitlines():
             if line.strip():
                 items.append(Item.model_validate_json(line))
-    assert_items_no_leakage(items)
+
+    if args.drop_leaks:
+        kept, dropped = drop_leaking_test_items(items)
+        if dropped:
+            tmp_path = path.with_suffix(".jsonl.tmp")
+            with tmp_path.open("w", encoding="utf-8", newline="\n") as handle:
+                for item in kept:
+                    handle.write(item.model_dump_json() + "\n")
+            tmp_path.replace(path)
+            write_routed_items(kept, private_root=private)
+            dropped_path = private / "leakage_dropped.jsonl"
+            with dropped_path.open("a", encoding="utf-8", newline="\n") as handle:
+                for item in dropped:
+                    handle.write(item.model_dump_json() + "\n")
+        else:
+            dropped_path = private / "leakage_dropped.jsonl"
+        assert_items_no_leakage(kept)
+        test_count = sum(1 for item in kept if item.split == "test")
+        print(
+            json.dumps(
+                {
+                    "ok": True,
+                    "items": len(kept),
+                    "dropped": len(dropped),
+                    "test_items": test_count,
+                    "dropped_path": str(dropped_path),
+                }
+            )
+        )
+        return 0
+
+    try:
+        assert_items_no_leakage(items)
+    except LeakageError as exc:
+        print(
+            f"leakage: {exc}\nHint: run `python -m app leakage --drop-leaks` to drop "
+            "leaking test items.",
+            file=sys.stderr,
+        )
+        return 1
     print(json.dumps({"ok": True, "items": len(items)}))
     return 0
 
@@ -406,7 +449,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_gen.set_defaults(func=cmd_generate)
 
     sub.add_parser("filter", help="filter generated items").set_defaults(func=cmd_filter)
-    sub.add_parser("leakage", help="check train/test leakage").set_defaults(func=cmd_leakage)
+    p_leak = sub.add_parser("leakage", help="check train/test leakage")
+    p_leak.add_argument(
+        "--drop-leaks",
+        action="store_true",
+        help="drop leaking test items and rewrite filtered.jsonl",
+    )
+    p_leak.set_defaults(func=cmd_leakage)
     sub.add_parser("export-review", help="export test CSV").set_defaults(func=cmd_export_review)
     sub.add_parser("import-review", help="import reviewed CSV").set_defaults(func=cmd_import_review)
     sub.add_parser("budget", help="show spend vs caps").set_defaults(func=cmd_budget)
