@@ -29,12 +29,23 @@ class Source(BaseModel):
     attribution_text: str | None = None
     format: str
     ingest: bool = False
+    # Optional extra download URLs (e.g. Network Science HTML chapters).
+    # When set, fetch downloads each URL and concatenates into one raw file.
+    urls: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def ingest_rules(self) -> Source:
         if self.ingest and self.licence_class == "C":
             raise ValueError(f"tier-C source {self.id} cannot be ingested")
         return self
+
+    def download_urls(self) -> list[str]:
+        """URLs to fetch. Prefers explicit `urls`; otherwise the primary `url`."""
+        if self.urls:
+            return list(self.urls)
+        if self.url:
+            return [self.url]
+        return []
 
 
 class SourcesFile(BaseModel):

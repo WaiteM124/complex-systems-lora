@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fetch validates Content-Type and magic bytes before saving; HTML landing pages are no longer written as PDFs.
+- cs-041 points at the Think Complexity 2e PDF; cs-021 fetches Network Science HTML chapters; cs-018 uses the PLOS JATS manuscript URL.
+- Chunk skips a bad source with a warning instead of crashing; exits non-zero only when nothing was chunked.
+- Fetch prints a per-source summary table (ok / skipped / failed) covering all 46 IDs.
+- arXiv e-prints that arrive as gzip/tar are unpacked to the main `.tex` before save.
+
 ### Added
 
 - Milestone 1 data pipeline: licence-tiered sources, extract/chunk/split, budget-guarded Bedrock generation client, filters, leakage checks, notes loader, review CSV import/export, and CLI (`python -m app`).

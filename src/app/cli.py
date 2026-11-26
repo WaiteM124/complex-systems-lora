@@ -17,7 +17,7 @@ from app.budget import BudgetGuard
 from app.data.chunk import Chunk, chunk_text, load_data_config
 from app.data.export_review import export_review_csv
 from app.data.extract import extract_file
-from app.data.fetch import fetch_all, raw_dir
+from app.data.fetch import fetch_all, format_summary_table, raw_dir
 from app.data.filters import filter_items
 from app.data.generate import generate_items, project_dry_run
 from app.data.import_review import import_review_csv
@@ -45,10 +45,16 @@ def cmd_sources(_: argparse.Namespace) -> int:
 
 
 def cmd_fetch(_: argparse.Namespace) -> int:
-    paths = fetch_all()
-    for path in paths:
-        print(path)
-    return 0
+    results = fetch_all()
+    print(format_summary_table(results))
+    for row in results:
+        if row.status == "failed":
+            print(f"WARNING: {row.source_id}: {row.reason}", file=sys.stderr)
+    failed = sum(1 for row in results if row.status == "failed")
+    ok = sum(1 for row in results if row.status == "ok")
+    if ok == 0:
+        return 1
+    return 1 if failed else 0
 
 
 def cmd_chunk(args: argparse.Namespace) -> int:
@@ -57,19 +63,39 @@ def cmd_chunk(args: argparse.Namespace) -> int:
     raw = raw_dir(private)
     chunks_out = private / "chunks.jsonl"
     chunks_out.parent.mkdir(parents=True, exist_ok=True)
-    all_chunks = []
+    all_chunks: list[Chunk] = []
+    sources_chunked = 0
     for source in ingestable_sources():
         require_ingestable(source.id)
-        matches = list(raw.glob(f"{source.id}.*"))
+        # Pathlib glob is Windows-safe; match source_id.* in the raw dir only.
+        matches = sorted(path for path in raw.glob(f"{source.id}.*") if path.is_file())
         if not matches:
-            print(f"skip {source.id}: no raw file in {raw}", file=sys.stderr)
+            print(f"WARNING: {source.id}: no raw file in {raw}", file=sys.stderr)
             continue
-        text = extract_file(matches[0], source.format)
-        all_chunks.extend(chunk_text(text, source_id=source.id))
+        try:
+            text = extract_file(matches[0], source.format)
+            produced = chunk_text(text, source_id=source.id)
+        except Exception as exc:  # noqa: BLE001 — continue past one bad source
+            print(
+                f"WARNING: {source.id}: skipping after extract/chunk error: {exc}",
+                file=sys.stderr,
+            )
+            continue
+        if not produced:
+            print(f"WARNING: {source.id}: produced zero chunks", file=sys.stderr)
+            continue
+        all_chunks.extend(produced)
+        sources_chunked += 1
     notes_dir = private / "notes"
     if notes_dir.exists():
-        all_chunks.extend(notes_to_chunks(load_notes_dir(notes_dir)))
-    with chunks_out.open("w", encoding="utf-8") as handle:
+        try:
+            note_chunks = notes_to_chunks(load_notes_dir(notes_dir))
+            all_chunks.extend(note_chunks)
+            if note_chunks:
+                sources_chunked += 1
+        except Exception as exc:  # noqa: BLE001
+            print(f"WARNING: notes: skipping after error: {exc}", file=sys.stderr)
+    with chunks_out.open("w", encoding="utf-8", newline="\n") as handle:
         for chunk in all_chunks:
             handle.write(
                 json.dumps(
@@ -85,7 +111,18 @@ def cmd_chunk(args: argparse.Namespace) -> int:
                 )
                 + "\n"
             )
-    print(json.dumps({"chunks": len(all_chunks), "path": str(chunks_out)}))
+    print(
+        json.dumps(
+            {
+                "chunks": len(all_chunks),
+                "sources_chunked": sources_chunked,
+                "path": str(chunks_out),
+            }
+        )
+    )
+    if sources_chunked == 0:
+        print("ERROR: zero sources were chunked", file=sys.stderr)
+        return 1
     return 0
 
 
