@@ -41,7 +41,7 @@ make budget
 1. `pip install -e ".[dev,data,bedrock]"`, then `python -m app fetch`
 2. Optional: export module-overview notes as Markdown into `data/private/notes/`
 3. `python -m app chunk && python -m app split && python -m app generate --dry-run` (worst case is informational; the live run checks the cap before every call)
-4. `AWS_PROFILE=<profile> make generate` (safe to Ctrl-C and rerun; add `--retry-failed` to re-attempt skipped chunks), then `python -m app filter && python -m app leakage`
+4. `AWS_PROFILE=<profile> make generate` (safe to Ctrl-C and rerun; add `--retry-failed` to re-attempt skipped chunks), then `python -m app filter && python -m app leakage --drop-leaks`
 5. `make review-export`, hand-check ~150 rows, then `make review-import`
 6. Upload `data/private/` to a **private** Kaggle dataset (milestone 3)
 

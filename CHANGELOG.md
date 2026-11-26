@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `leakage --drop-leaks` flag: drops test-split items that share a 13-gram with train/val, rewrites `filtered.jsonl` atomically, appends dropped items to `leakage_dropped.jsonl`, and re-runs the leakage check on kept items. Without the flag, a leakage error now prints a helpful message suggesting `--drop-leaks` and exits 1 (no traceback).
+
 ### Fixed
 
 - `generate` no longer aborts on one malformed model reply. Replies are repaired (unescaped inner quotes, LaTeX backslashes, fences, truncation at `max_tokens`); an unparseable reply is retried once, then the chunk is skipped and logged to `data/private/generate_failures.jsonl`.
