@@ -15,6 +15,7 @@ import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlparse
 
 from app.data.sources import Source, load_sources
 from app.paths import repo_root
@@ -65,10 +66,20 @@ def default_http_get(url: str) -> tuple[bytes, str]:
 
 def resolve_fetch_url(source: Source, url: str) -> str:
     """Rewrite arXiv abs URLs to the e-print endpoint."""
-    if source.format == "arxiv_src" and "arxiv.org/abs/" in url:
-        paper_id = url.rstrip("/").split("/")[-1]
-        return f"https://arxiv.org/e-print/{paper_id}"
-    return url
+    if source.format != "arxiv_src":
+        return url
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+    # Compare the hostname exactly — never substring-match inside the full URL.
+    if not (host == "arxiv.org" or host.endswith(".arxiv.org")):
+        return url
+    path = parsed.path.rstrip("/")
+    if not path.startswith("/abs/"):
+        return url
+    paper_id = path.rsplit("/", 1)[-1]
+    if not paper_id:
+        return url
+    return f"https://arxiv.org/e-print/{paper_id}"
 
 
 def _looks_like_html(data: bytes) -> bool:

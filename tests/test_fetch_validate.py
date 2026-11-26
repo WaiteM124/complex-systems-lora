@@ -10,6 +10,7 @@ from app.data.fetch import (
     fetch_source,
     format_summary_table,
     normalise_payload,
+    resolve_fetch_url,
     unpack_arxiv_payload,
     validate_content,
 )
@@ -23,6 +24,24 @@ def _pdf_bytes() -> bytes:
 
 def _html_bytes(body: str = "<html><body><p>Hello</p></body></html>") -> bytes:
     return body.encode("utf-8")
+
+
+def test_resolve_fetch_url_uses_hostname_not_substring() -> None:
+    source = Source(
+        id="cs-033",
+        title="fixture",
+        licence_class="A",
+        format="arxiv_src",
+        ingest=True,
+        url="https://arxiv.org/abs/1801.03680",
+    )
+    assert (
+        resolve_fetch_url(source, "https://arxiv.org/abs/1801.03680")
+        == "https://arxiv.org/e-print/1801.03680"
+    )
+    # A URL that merely contains the substring must not be rewritten.
+    decoy = "https://evil.example/path?q=arxiv.org/abs/1801.03680"
+    assert resolve_fetch_url(source, decoy) == decoy
 
 
 def test_validate_pdf_rejects_html_landing_page() -> None:
@@ -116,15 +135,27 @@ def test_fetch_all_summary_skips_tier_c(tmp_path: Path) -> None:
     assert len(sources.sources) == 46
 
     def fake_get(url: str) -> tuple[bytes, str]:
-        if url.endswith(".pdf") or "thinkcomplexity" in url:
+        from urllib.parse import urlparse
+
+        parsed = urlparse(url)
+        path = parsed.path
+        host = (parsed.hostname or "").lower()
+        if path.endswith(".pdf") or path.endswith("thinkcomplexity2.pdf"):
             return _pdf_bytes(), "application/pdf"
-        if "manuscript" in url or url.endswith(".xml"):
+        if path.endswith(".xml") or path.endswith("/article/file"):
             return b'<?xml version="1.0"?><article><body>x</body></article>', "text/xml"
-        if "e-print" in url or "arxiv.org" in url:
+        # Hostname equality only — avoids CodeQL incomplete-sanitization alerts.
+        if host == "arxiv.org" or host.endswith(".arxiv.org"):
             # Minimal latex-looking payload (already unpacked form).
-            return b"\\documentclass{article}\\begin{document}Hi\\end{document}", "application/gzip"
+            return (
+                b"\\documentclass{article}\\begin{document}Hi\\end{document}",
+                "application/gzip",
+            )
         # HTML chapters / libretexts
-        return _html_bytes("<html><body><p>" + ("alpha " * 300) + "</p></body></html>"), "text/html"
+        return (
+            _html_bytes("<html><body><p>" + ("alpha " * 300) + "</p></body></html>"),
+            "text/html",
+        )
 
     results = fetch_all(private_root=tmp_path, http_get=fake_get)
     assert len(results) == 46
