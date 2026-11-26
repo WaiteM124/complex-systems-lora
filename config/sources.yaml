@@ -278,7 +278,7 @@ sources:
   authors:
   - Unknown
   year: null
-  url: https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0041010
+  url: https://journals.plos.org/plosone/article/file?id=10.1371/journal.pone.0041010&type=manuscript
   licence: CC-BY-4.0
   licence_url: https://creativecommons.org/licenses/by/4.0/
   licence_class: A
@@ -333,8 +333,21 @@ sources:
   nc_flag: true
   nd_flag: false
   attribution_text: 'Network Science (online textbook). Source: https://networksciencebook.com/'
-  format: pdf
+  format: html
   ingest: true
+  urls:
+  - https://networksciencebook.com/translations/en/partials/ch-0.html
+  - https://networksciencebook.com/translations/en/partials/ch-1.html
+  - https://networksciencebook.com/translations/en/partials/ch-2.html
+  - https://networksciencebook.com/translations/en/partials/ch-3.html
+  - https://networksciencebook.com/translations/en/partials/ch-4.html
+  - https://networksciencebook.com/translations/en/partials/ch-5.html
+  - https://networksciencebook.com/translations/en/partials/ch-6.html
+  - https://networksciencebook.com/translations/en/partials/ch-7.html
+  - https://networksciencebook.com/translations/en/partials/ch-8.html
+  - https://networksciencebook.com/translations/en/partials/ch-9.html
+  - https://networksciencebook.com/translations/en/partials/ch-10.html
+  - https://networksciencebook.com/translations/en/partials/ch-11.html
 - id: cs-022
   module: E
   title: Emergence of scaling in random networks
@@ -631,7 +644,7 @@ sources:
   authors:
   - Unknown
   year: null
-  url: https://greenteapress.com/wp/think-complexity-2e/
+  url: https://greenteapress.com/complexity2/thinkcomplexity2.pdf
   licence: CC-BY-NC-SA-4.0
   licence_url: https://creativecommons.org/licenses/by-nc-sa/4.0/
   licence_class: B
