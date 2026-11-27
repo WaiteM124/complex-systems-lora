@@ -34,6 +34,20 @@ dev = [
 langfuse = [
   "langfuse>=5.0.0",
 ]
+# GPU-only (Kaggle T4). Never installed in CI. Pins checked against PyPI on
+# 2026-11-27 for mutual compatibility (unsloth 2026.11.12 caps transformers
+# <=5.17.0, trl <=1.15.0, datasets <5, torch <2.15). Torch itself comes from the
+# Kaggle image; the notebooks pin it to the installed build with a constraint.
+train = [
+  "unsloth==2026.11.12",
+  "unsloth_zoo==2026.11.12",
+  "transformers==5.17.0",
+  "trl==1.15.0",
+  "peft==0.22.0",
+  "bitsandbytes==0.50.2",
+  "accelerate==1.16.0",
+  "datasets==4.8.5",
+]
 
 [build-system]
 requires = ["setuptools>=75.0"]
@@ -56,6 +70,22 @@ strict = true
 mypy_path = "src"
 packages = ["app"]
 plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+# GPU-only libraries (the `train` extra) are imported lazily and never in CI.
+module = [
+  "torch", "torch.*",
+  "transformers", "transformers.*",
+  "peft", "peft.*",
+  "trl", "trl.*",
+  "unsloth", "unsloth.*",
+  "datasets", "datasets.*",
+  "safetensors", "safetensors.*",
+  "huggingface_hub", "huggingface_hub.*",
+  "kaggle_secrets",
+]
+ignore_missing_imports = true
+follow_imports = "skip"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

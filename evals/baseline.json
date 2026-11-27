@@ -3,5 +3,17 @@
     "schema_validity": 1.0,
     "quote_faithfulness": 1.0,
     "n_cases": 6.0
+  },
+  "gate": {
+    "results_dir": "results",
+    "base_system": "base",
+    "lora_system": "lora",
+    "primary_metric": "answerability_f1",
+    "primary_min_gain": 0.10,
+    "base_primary_switch_above": 0.85,
+    "switched_primary_metric": "quote_faithfulness",
+    "quote_faithfulness_min": 0.90,
+    "json_validity_min": 0.98,
+    "judge_max_drop": 0.2
   }
 }

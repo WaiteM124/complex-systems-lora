@@ -1,0 +1,46 @@
+# Evaluation settings for systems (a) base, (b) base + LoRA and (c) Bedrock.
+# Model ids live in config/models.yaml only. Loaded by src/app/eval/config.py.
+
+data:
+  path: ""                    # empty = glob search_roots for reviewed.jsonl
+  search_roots:
+    - /kaggle/input
+  filename: reviewed.jsonl
+  split: test
+
+prompt:
+  answer_system_version: 1
+  judge_rubric_version: 1
+
+local:
+  # transformers + PEFT on one T4, greedy decoding, batch size 1 (honest latency).
+  dtype: float16
+  load_in_4bit: false
+  max_new_tokens: 384
+  hardware_label_default: "unknown GPU"
+
+adapter:
+  # Resolution order: --adapter flag, local_dir, kaggle glob, hub_repo.
+  local_dir: /kaggle/working/adapter
+  search_roots:
+    - /kaggle/input
+  hub_repo: WaiteM124/complex-systems-lora
+
+bedrock:
+  # System (c) uses the `generator` model from config/models.yaml, phase `eval`.
+  answer_max_tokens: 400
+  temperature: 0.0
+  system_name: qwen3-235b
+  hardware_label: "Bedrock eu-west-2"
+
+judge:
+  systems: [base, lora, qwen3-235b]
+
+paths:
+  # Kaggle defaults; the CLIs take overrides. Local Bedrock runs write under
+  # data/private/ (gitignored) and only aggregates go to results/.
+  kaggle_predictions_dir: /kaggle/working/predictions
+  kaggle_results_dir: /kaggle/working/results
+  local_predictions_dir: data/private/predictions
+  local_judgments_dir: data/private/judgments
+  results_dir: results

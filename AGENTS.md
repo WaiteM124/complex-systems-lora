@@ -30,10 +30,14 @@ Single source of truth for humans and AI agents (including Cursor) working in th
 | Path | Role |
 |---|---|
 | `src/app/` | Python package: settings, observability, model config, prompts, budget guard, Bedrock client, schema, data pipeline, CLI |
-| `src/app/data/` | Sources, extract, fetch, chunk, split, generate, filters, leakage, licence, notes, review import/export |
+| `src/app/data/` | Sources, extract, fetch, chunk, split, generate, filters, leakage, licence, notes, review import/export, reviewed-dataset loading |
+| `src/app/train/` | QLoRA training (`python -m app.train.qlora`); GPU libraries imported lazily |
+| `src/app/eval/`, `src/app/scoring.py` | Scorers, local GPU predictions, Bedrock baseline, judge, results files and the results gate |
+| `notebooks/` | Thin Kaggle notebooks (`train_qlora.ipynb`, `eval.ipynb`); committed without outputs |
+| `results/` | Aggregate-only eval results (`<run>.json`), no text |
 | `tests/` | Unit and other automated tests (`pytest`), plus CC0 fixtures under `tests/fixtures/` |
 | `evals/` | Offline eval harness, baseline, and JSONL datasets under `evals/datasets/` (tier A only) |
-| `config/` | `models.yaml`, `prices.yaml`, `budget.yaml`, `sources.yaml`, `concepts.yaml`, `data.yaml` |
+| `config/` | `models.yaml`, `prices.yaml`, `budget.yaml`, `sources.yaml`, `concepts.yaml`, `data.yaml`, `train.yaml`, `eval.yaml` |
 | `prompts/` | Versioned prompt files (`{name}.v{N}.txt`) |
 | `data/ledger/` | Committed Bedrock spend ledger (token counts and cost only) |
 | `data/splits/` | Committed section-split IDs (no passage text) |
@@ -44,7 +48,7 @@ Single source of truth for humans and AI agents (including Cursor) working in th
 | `.cursor/rules/` | Cursor rules that summarise this file for scoped globs |
 | `.github/workflows/` | lint-and-test, eval-gate, CodeQL, pip-audit, Terraform (path-filtered), and release |
 
-Stack: **Python 3.12+**. Optional extras: `data` (extractors), `bedrock` (boto3).
+Stack: **Python 3.12+**. Optional extras: `data` (extractors), `bedrock` (boto3), `train` (pinned GPU stack for Kaggle; never installed in CI, and tests must not import torch/unsloth/trl/peft at module import time).
 
 ---
 

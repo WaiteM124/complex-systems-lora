@@ -1,0 +1,74 @@
+# QLoRA recipe for Qwen3-4B on one free 16 GB T4 (Kaggle primary, Colab fallback).
+# Loaded by src/app/train/config.py. The base model id comes from config/models.yaml
+# (`base_model`); do not put model ids here or in Python.
+# See ADR-004 and README "Training on Kaggle".
+
+data:
+  # Empty = glob search_roots for reviewed.jsonl (Kaggle mounts vary).
+  # Local runs: set this or pass --data data/private/reviewed.jsonl.
+  path: ""
+  search_roots:
+    - /kaggle/input
+  filename: reviewed.jsonl
+
+prompt:
+  answer_system_version: 1
+  # Chat-template markers for Qwen3 (ChatML). Loss is computed on the text after
+  # response_part only, i.e. the assistant JSON completion.
+  instruction_part: "<|im_start|>user\n"
+  response_part: "<|im_start|>assistant\n"
+
+model:
+  load_in_4bit: true          # QLoRA: nf4 base weights (bitsandbytes)
+  bnb_4bit_quant_type: nf4
+  max_seq_length: 2048
+
+lora:
+  r: 16
+  alpha: 32
+  dropout: 0.0
+  target_modules: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj]
+  bias: none
+
+training:
+  learning_rate: 2.0e-4
+  num_train_epochs: 3
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 8
+  gradient_checkpointing: true
+  fp16: true                  # T4 has no bf16
+  bf16: false
+  optim: adamw_8bit
+  lr_scheduler_type: cosine
+  warmup_ratio: 0.03
+  weight_decay: 0.0
+  logging_steps: 5
+  save_steps: 25              # resumable checkpoints
+  save_total_limit: 12
+  seed: 20261126
+  smoke_steps: 20
+
+# Tried in order when CUDA runs out of memory. The first rung is the recipe above.
+oom_fallback:
+  - {per_device_train_batch_size: 1, gradient_accumulation_steps: 16}
+  - {per_device_train_batch_size: 1, gradient_accumulation_steps: 16, max_seq_length: 1536}
+
+selection:
+  # Checkpoints are scored by validation answerability F1 (macro) on a fixed,
+  # seeded subset of the val split, greedy decoding. Kept small to stay cheap.
+  val_items: 48
+  max_new_tokens: 256
+  max_candidates: 4           # newest N checkpoints are scored
+
+output:
+  working_dir: /kaggle/working
+  checkpoints_subdir: checkpoints
+  adapter_subdir: adapter
+  summary_file: train_summary.json
+  state_file: train_state.json
+
+hub:
+  # Pushed only when HF_TOKEN is set (env var or Kaggle Secret). Never printed.
+  push: true
+  repo_id: WaiteM124/complex-systems-lora
+  private: false
