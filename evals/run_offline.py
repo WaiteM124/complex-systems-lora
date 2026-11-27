@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
-"""Deterministic offline eval gate for the public tier-A fixture slice.
+"""Deterministic offline eval gate. No network calls, no keys.
 
-Validates every JSONL case in evals/datasets/ against the Item schema,
-requires licence_class == "A", and checks quote faithfulness. Exits
-non-zero on regression against evals/baseline.json. No network calls.
+1. Tier-A slice: validates every JSONL case in evals/datasets/ against the Item
+   schema, requires licence_class == "A", and checks quote faithfulness against
+   evals/baseline.json `metrics`.
+2. Results gate: validates every committed results/*.json (aggregates only) and
+   checks the newest run holding both base and LoRA against evals/baseline.json
+   `gate` (see src/app/eval/gate.py). Skips cleanly when no results exist yet.
+
+Exits non-zero on any regression or failed gate check.
 """
 
 from __future__ import annotations
@@ -15,6 +20,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from app.eval.gate import GateConfig, run_gate  # noqa: E402
 from app.schema import Item  # noqa: E402
 
 BASELINE_PATH = ROOT / "evals" / "baseline.json"
@@ -83,7 +89,28 @@ def main() -> int:
             print(f"  {item}")
         return 1
 
-    print("Eval gate passed.")
+    gate_config = GateConfig.model_validate(baseline.get("gate", {}))
+    outcome = run_gate(ROOT / gate_config.results_dir, gate_config)
+    print(
+        json.dumps(
+            {
+                "results_gate": outcome.status,
+                "results_file": outcome.results_file,
+                "checks": outcome.checks,
+                "failures": outcome.failures,
+            },
+            indent=2,
+        )
+    )
+    if outcome.status == "fail":
+        print("RESULTS GATE FAILED")
+        return 1
+
+    print(
+        "Eval gate passed."
+        if outcome.status == "pass"
+        else "Eval gate passed (results gate skipped)."
+    )
     return 0
 
 

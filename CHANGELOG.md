@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Milestones 2-3: QLoRA training and evaluation harness.
+  - `python -m app.train.qlora` + `config/train.yaml`: Unsloth/TRL/PEFT QLoRA recipe for one T4 (nf4, r=16, alpha=32, fp16, assistant-only loss), `--smoke` (20 steps, peak VRAM), OOM fallback ladder, resumable checkpoints, checkpoint selection by validation answerability F1, optional HF Hub push when `HF_TOKEN` is set, and a hard check that no test item is trained on.
+  - `notebooks/train_qlora.ipynb` and `notebooks/eval.ipynb`: thin Kaggle notebooks (no outputs) that install the pinned `train` extra and call the package.
+  - `src/app/scoring.py`: answerability F1 (macro), quote faithfulness, JSON validity, concept micro-F1, latency p50/p95, tokens/sec.
+  - `src/app/eval/`: local GPU predictions for base and base + LoRA, Bedrock baseline (system c) and DeepSeek judge through `GuardedBedrockClient` in the `eval` phase with `--dry-run`, and `app.eval.score` writing aggregate-only `results/<run>.json` with the test split's SHA-256.
+  - `prompts/judge_rubric.v1.txt`, `config/eval.yaml`, `src/app/task.py` (shared prompt format) and `src/app/data/reviewed.py` (dataset discovery under `/kaggle/input`, split loading).
+  - `make eval` now also validates `results/*.json` and gates LoRA vs base (F1 +10 points, quote faithfulness >= 90%, JSON validity >= 98%, judge within 0.2); it skips cleanly with no results.
+  - `train` optional extra (GPU only, never installed in CI); Makefile targets `train-check`, `baseline-dry`, `baseline`, `judge-dry`, `judge`, `score`.
+
 - `leakage --drop-leaks` flag: drops test-split items that share a 13-gram with train/val, rewrites `filtered.jsonl` atomically, appends dropped items to `leakage_dropped.jsonl`, and re-runs the leakage check on kept items. Without the flag, a leakage error now prints a helpful message suggesting `--drop-leaks` and exits 1 (no traceback).
 
 ### Fixed

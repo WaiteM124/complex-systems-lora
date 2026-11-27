@@ -79,6 +79,9 @@ credentials
 docker-compose.override.yml
 *.local
 
+# Notebook editor state (notebooks are committed without outputs)
+.ipynb_checkpoints/
+
 # Logs and eval output
 *.log
 logs/
